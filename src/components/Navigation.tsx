@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Container, Terminal, Image, Layers, BookOpen } from 'lucide-react';
+import { Container, Terminal, Package, Layers, BookOpen, Network, HardDrive, FileText, Search } from 'lucide-react';
 
 interface NavigationProps {
   activeSection: string;
@@ -13,7 +13,11 @@ const Navigation = ({ activeSection, onSectionChange }: NavigationProps) => {
   const navigationItems = [
     { id: 'intro', label: 'What is Docker?', icon: Container },
     { id: 'cli', label: 'Docker CLI', icon: Terminal },
-    { id: 'images', label: 'Popular Images', icon: Image },
+    { id: 'images', label: 'Popular Images', icon: Package },
+    { id: 'networks', label: 'Networks', icon: Network },
+    { id: 'volumes', label: 'Volumes', icon: HardDrive },
+    { id: 'logs', label: 'Logs', icon: FileText },
+    { id: 'inspect', label: 'Inspect', icon: Search },
     { id: 'compose', label: 'Docker Compose', icon: Layers },
     { id: 'resources', label: 'Resources', icon: BookOpen },
   ];

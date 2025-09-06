@@ -407,7 +407,7 @@ const DockerLogs = () => {
             </div>
             <div>
               <code className="text-xs bg-terminal-bg text-terminal-text px-2 py-1 rounded block mb-1">
-                docker logs 2>&1 | grep ERROR
+                docker logs 2&gt;&amp;1 | grep ERROR
               </code>
               <p className="text-xs text-muted-foreground">Filter error messages</p>
             </div>
