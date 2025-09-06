@@ -4,8 +4,12 @@ import { Container, ArrowRight, BookOpen, ExternalLink } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import DockerScene from '../components/DockerScene';
 import Terminal from '../components/Terminal';
-import ImageGallery from '../components/ImageGallery';
+import EnhancedImageGallery from '../components/EnhancedImageGallery';
 import DockerCompose from '../components/DockerCompose';
+import DockerNetworks from '../components/DockerNetworks';
+import DockerVolumes from '../components/DockerVolumes';
+import DockerLogs from '../components/DockerLogs';
+import DockerInspect from '../components/DockerInspect';
 
 const dockerCommands = [
   {
@@ -81,7 +85,7 @@ const Index = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      const sections = ['intro', 'cli', 'images', 'compose', 'resources'];
+      const sections = ['intro', 'cli', 'images', 'networks', 'volumes', 'logs', 'inspect', 'compose', 'resources'];
       const scrollPosition = window.scrollY + 100;
 
       for (const section of sections) {
@@ -223,7 +227,35 @@ const Index = () => {
       {/* Popular Images Section */}
       <section id="images" className="py-20 bg-secondary/20">
         <div className="container mx-auto px-6">
-          <ImageGallery />
+          <EnhancedImageGallery />
+        </div>
+      </section>
+
+      {/* Docker Networks Section */}
+      <section id="networks" className="py-20">
+        <div className="container mx-auto px-6">
+          <DockerNetworks />
+        </div>
+      </section>
+
+      {/* Docker Volumes Section */}
+      <section id="volumes" className="py-20 bg-secondary/20">
+        <div className="container mx-auto px-6">
+          <DockerVolumes />
+        </div>
+      </section>
+
+      {/* Docker Logs Section */}
+      <section id="logs" className="py-20">
+        <div className="container mx-auto px-6">
+          <DockerLogs />
+        </div>
+      </section>
+
+      {/* Docker Inspect Section */}
+      <section id="inspect" className="py-20 bg-secondary/20">
+        <div className="container mx-auto px-6">
+          <DockerInspect />
         </div>
       </section>
 
