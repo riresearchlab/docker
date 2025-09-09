@@ -124,6 +124,7 @@ const networkTypes = [
 const DockerNetworks = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [runningCommand, setRunningCommand] = useState<string | null>(null);
+  const [selectedOutput, setSelectedOutput] = useState<string[]>([]);
 
   const categories = [
     { id: 'all', label: 'All Commands' },
@@ -141,11 +142,20 @@ const DockerNetworks = () => {
     toast.success('Command copied to clipboard!');
   };
 
-  const executeCommand = async (command: string) => {
-    setRunningCommand(command);
-    await new Promise(resolve => setTimeout(resolve, 1500));
+  const executeCommand = async (cmd: NetworkCommand) => {
+    setRunningCommand(cmd.command);
+    setSelectedOutput([]);
+    
+    // Simulate command execution
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Show output line by line
+    for (let i = 0; i < cmd.output.length; i++) {
+      await new Promise(resolve => setTimeout(resolve, 200));
+      setSelectedOutput(prev => [...prev, cmd.output[i]]);
+    }
+    
     setRunningCommand(null);
-    toast.success('Command executed successfully!');
   };
 
   return (
@@ -241,7 +251,7 @@ const DockerNetworks = () => {
               className={`container-surface p-4 cursor-pointer transition-all duration-300 ${
                 runningCommand === cmd.command ? 'container-active' : 'hover:bg-secondary/50'
               }`}
-              onClick={() => executeCommand(cmd.command)}
+              onClick={() => executeCommand(cmd)}
             >
               <div className="flex items-center justify-between mb-2">
                 <code className="text-primary font-mono text-sm bg-primary/10 px-2 py-1 rounded">
@@ -290,7 +300,16 @@ const DockerNetworks = () => {
                     |
                   </motion.span>
                 </div>
-                <div className="text-muted-foreground text-sm">Executing command...</div>
+                {selectedOutput.map((line, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="command-output font-mono"
+                  >
+                    {line}
+                  </motion.div>
+                ))}
               </div>
             ) : (
               <div className="space-y-2">
@@ -298,9 +317,20 @@ const DockerNetworks = () => {
                   <span className="command-prompt">$</span>
                   <span className="text-foreground">docker network --help</span>
                 </div>
-                <div className="text-muted-foreground text-sm mt-4">
-                  Click a command above to see its output...
-                </div>
+                {selectedOutput.length > 0 && (
+                  <div className="space-y-1 mt-4">
+                    {selectedOutput.map((line, index) => (
+                      <div key={index} className="command-output font-mono">
+                        {line}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {selectedOutput.length === 0 && (
+                  <div className="text-muted-foreground text-sm mt-4">
+                    Click a command above to see its output...
+                  </div>
+                )}
               </div>
             )}
           </div>
