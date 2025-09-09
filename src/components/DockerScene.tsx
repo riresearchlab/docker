@@ -50,40 +50,41 @@ const NetworkConnection = ({ start, end, color = '#00d2ff' }: {
   end: [number, number, number],
   color?: string 
 }) => {
-  const lineRef = useRef<THREE.BufferGeometry>(null);
+  const meshRef = useRef<THREE.Mesh>(null);
   
   useFrame((state) => {
-    if (lineRef.current) {
-      const positions = lineRef.current.attributes.position.array as Float32Array;
-      for (let i = 0; i < positions.length; i += 3) {
-        positions[i + 1] += Math.sin(state.clock.elapsedTime * 3 + i) * 0.02;
-      }
-      lineRef.current.attributes.position.needsUpdate = true;
+    if (meshRef.current && meshRef.current.material) {
+      const material = meshRef.current.material as THREE.MeshBasicMaterial;
+      material.opacity = 0.3 + Math.sin(state.clock.elapsedTime * 2) * 0.2;
     }
   });
 
-  const points = [];
-  for (let i = 0; i <= 20; i++) {
-    const t = i / 20;
-    points.push(new THREE.Vector3(
-      start[0] + (end[0] - start[0]) * t,
-      start[1] + (end[1] - start[1]) * t + Math.sin(t * Math.PI) * 0.3,
-      start[2] + (end[2] - start[2]) * t
-    ));
-  }
+  // Calculate distance and position for the connection cylinder
+  const distance = Math.sqrt(
+    Math.pow(end[0] - start[0], 2) + 
+    Math.pow(end[1] - start[1], 2) + 
+    Math.pow(end[2] - start[2], 2)
+  );
+  
+  const midpoint: [number, number, number] = [
+    (start[0] + end[0]) / 2,
+    (start[1] + end[1]) / 2,
+    (start[2] + end[2]) / 2
+  ];
 
   return (
-    <line>
-      <bufferGeometry ref={lineRef}>
-        <bufferAttribute
-          attach="attributes-position"
-          count={points.length}
-          array={new Float32Array(points.flatMap(p => [p.x, p.y, p.z]))}
-          itemSize={3}
-        />
-      </bufferGeometry>
-      <lineBasicMaterial color={color} linewidth={2} transparent opacity={0.6} />
-    </line>
+    <Cylinder
+      ref={meshRef}
+      position={midpoint}
+      args={[0.02, 0.02, distance, 8]}
+      rotation={[
+        Math.atan2(end[1] - start[1], Math.sqrt(Math.pow(end[0] - start[0], 2) + Math.pow(end[2] - start[2], 2))),
+        Math.atan2(end[0] - start[0], end[2] - start[2]),
+        0
+      ]}
+    >
+      <meshBasicMaterial color={color} transparent opacity={0.5} />
+    </Cylinder>
   );
 };
 
