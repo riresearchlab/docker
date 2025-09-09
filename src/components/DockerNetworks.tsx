@@ -7,7 +7,7 @@ interface NetworkCommand {
   command: string;
   description: string;
   output: string[];
-  category: 'create' | 'list' | 'inspect' | 'connect';
+  category: 'create' | 'list' | 'inspect' | 'connect' | 'disconnect' | 'remove';
 }
 
 const networkCommands: NetworkCommand[] = [
@@ -87,6 +87,44 @@ const networkCommands: NetworkCommand[] = [
       'Status: Downloaded newer image for nginx:latest',
       '4a7c8e9f2b5d1a3c6e8f9b2a4c7d5e8f1a3b6c9d2e5f8a1b4c7e0d3f6a9b2c5e8f1a4b7c0d3'
     ]
+  },
+  {
+    command: 'docker network disconnect my-network nginx-container',
+    description: 'Disconnect a container from a custom network',
+    category: 'disconnect',
+    output: [
+      'Successfully disconnected nginx-container from my-network'
+    ]
+  },
+  {
+    command: 'docker network rm my-network',
+    description: 'Remove a custom network (no containers should be connected)',
+    category: 'remove',
+    output: [
+      'my-network'
+    ]
+  },
+  {
+    command: 'docker network rm custom-net app-network',
+    description: 'Remove multiple networks at once',
+    category: 'remove',
+    output: [
+      'custom-net',
+      'app-network'
+    ]
+  },
+  {
+    command: 'docker network prune',
+    description: 'Remove all unused networks (not connected to any containers)',
+    category: 'remove',
+    output: [
+      'WARNING! This will remove all custom networks not used by at least one container.',
+      'Are you sure you want to continue? [y/N] y',
+      'Deleted Networks:',
+      'old-network',
+      'unused-net',
+      'temp-network'
+    ]
   }
 ];
 
@@ -130,7 +168,9 @@ const DockerNetworks = () => {
     { id: 'all', label: 'All Commands' },
     { id: 'list', label: 'List & Inspect' },
     { id: 'create', label: 'Create Networks' },
-    { id: 'connect', label: 'Connect Containers' }
+    { id: 'connect', label: 'Connect Containers' },
+    { id: 'disconnect', label: 'Disconnect' },
+    { id: 'remove', label: 'Remove Networks' }
   ];
 
   const filteredCommands = selectedCategory === 'all' 

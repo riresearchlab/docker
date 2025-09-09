@@ -7,7 +7,7 @@ interface VolumeCommand {
   command: string;
   description: string;
   output: string[];
-  category: 'create' | 'list' | 'inspect' | 'mount';
+  category: 'create' | 'list' | 'inspect' | 'mount' | 'remove';
 }
 
 const volumeCommands: VolumeCommand[] = [
@@ -86,6 +86,49 @@ const volumeCommands: VolumeCommand[] = [
     output: [
       '8c1e3f5a7c9e1f3a5c7e9f1a3c5e7f9a1c3d5a7c9e1f3a5c7e9f1a3c5e7f9a1c3d5a7c9e1f3a5'
     ]
+  },
+  {
+    command: 'docker volume rm app-data',
+    description: 'Remove a specific volume (must not be in use by containers)',
+    category: 'remove',
+    output: [
+      'app-data'
+    ]
+  },
+  {
+    command: 'docker volume rm postgres-data redis-cache',
+    description: 'Remove multiple volumes at once',
+    category: 'remove',
+    output: [
+      'postgres-data',
+      'redis-cache'
+    ]
+  },
+  {
+    command: 'docker volume prune',
+    description: 'Remove all unused volumes (not mounted by any containers)',
+    category: 'remove',
+    output: [
+      'WARNING! This will remove all local volumes not used by at least one container.',
+      'Are you sure you want to continue? [y/N] y',
+      'Deleted Volumes:',
+      'old-volume',
+      'temp-data',
+      'unused-cache',
+      '',
+      'Total reclaimed space: 1.2GB'
+    ]
+  },
+  {
+    command: 'docker volume rm $(docker volume ls -q)',
+    description: 'Remove all volumes (advanced - use with caution)',
+    category: 'remove',
+    output: [
+      'Error response from daemon: remove app-data: volume is in use - [7f9c8d5a1b3e]',
+      'postgres-data',
+      'redis-cache',
+      'nginx-config'
+    ]
   }
 ];
 
@@ -125,7 +168,8 @@ const DockerVolumes = () => {
     { id: 'all', label: 'All Commands' },
     { id: 'list', label: 'List & Inspect' },
     { id: 'create', label: 'Create Volumes' },
-    { id: 'mount', label: 'Mount & Use' }
+    { id: 'mount', label: 'Mount & Use' },
+    { id: 'remove', label: 'Remove Volumes' }
   ];
 
   const filteredCommands = selectedCategory === 'all' 

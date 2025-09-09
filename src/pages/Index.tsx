@@ -82,6 +82,41 @@ const dockerCommands = [
       '2024-01-15 10:31:20 192.168.1.100 - - [15/Jan/2024:10:31:20 +0000] "GET / HTTP/1.1" 200 612'
     ],
     description: 'View the logs from a specific container'
+  },
+  {
+    command: 'docker rm web-server',
+    output: [
+      'Error response from daemon: You cannot remove a running container 7f9c8d5a1b3e. Stop the container before attempting removal or force remove',
+    ],
+    description: 'Remove a container (must be stopped first)'
+  },
+  {
+    command: 'docker rm -f web-server database',
+    output: [
+      'web-server',
+      'database'
+    ],
+    description: 'Force remove multiple containers (running or stopped)'
+  },
+  {
+    command: 'docker rmi nginx:latest',
+    output: [
+      'Error response from daemon: conflict: unable to remove repository reference "nginx:latest" (must force) - container 7f9c8d5a1b3e is using its referenced image 2ac49d2a5a73'
+    ],
+    description: 'Remove a Docker image (fails if containers are using it)'
+  },
+  {
+    command: 'docker rmi -f nginx:latest postgres:13',
+    output: [
+      'Untagged: nginx:latest',
+      'Untagged: nginx@sha256:2ac49d2a5a73...',
+      'Deleted: sha256:2ac49d2a5a73...',
+      'Deleted: sha256:e2f2ac8d5a8a...',
+      'Untagged: postgres:13',
+      'Untagged: postgres@sha256:3f5b5e2c1a9b...',
+      'Deleted: sha256:3f5b5e2c1a9b...'
+    ],
+    description: 'Force remove multiple Docker images'
   }
 ];
 
