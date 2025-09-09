@@ -171,27 +171,6 @@ const Index = () => {
                 anywhere with the power of lightweight, portable containers.
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-4">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 rounded-lg font-semibold glow-primary hover:glow-intense transition-all duration-300"
-                  onClick={() => document.getElementById('cli')?.scrollIntoView({ behavior: 'smooth' })}
-                >
-                  <Container className="w-5 h-5" />
-                  Start Learning
-                  <ArrowRight className="w-5 h-5" />
-                </motion.button>
-                
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex items-center gap-2 container-surface border border-primary/20 px-8 py-4 rounded-lg font-semibold hover:bg-primary/10 transition-all duration-300"
-                >
-                  <BookOpen className="w-5 h-5" />
-                  View Documentation
-                </motion.button>
-              </div>
             </motion.div>
             
             <motion.div

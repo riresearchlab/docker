@@ -1,64 +1,203 @@
-import { useRef } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Box, Text } from '@react-three/drei';
+import { useRef, useState, useEffect } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls, Box, Cylinder, Sphere, Text3D, Center } from '@react-three/drei';
 import { motion } from 'framer-motion';
+import * as THREE from 'three';
 
-const ContainerBox = ({ position, color, scale = 1 }: { position: [number, number, number], color: string, scale?: number }) => {
-  const meshRef = useRef();
+const AnimatedContainer = ({ position, color, scale = 1, delay = 0 }: { 
+  position: [number, number, number], 
+  color: string, 
+  scale?: number,
+  delay?: number 
+}) => {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const [hovered, setHovered] = useState(false);
+
+  useFrame((state) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y = Math.sin(state.clock.elapsedTime + delay) * 0.1;
+      meshRef.current.position.y = position[1] + Math.sin(state.clock.elapsedTime * 2 + delay) * 0.05;
+      
+      if (hovered) {
+        meshRef.current.scale.setScalar(scale * 1.1);
+      } else {
+        meshRef.current.scale.setScalar(scale);
+      }
+    }
+  });
 
   return (
     <Box
       ref={meshRef}
       position={position}
-      scale={[scale, scale, scale]}
-      args={[1, 0.6, 1]}
+      args={[1, 0.8, 1]}
+      onPointerOver={() => setHovered(true)}
+      onPointerOut={() => setHovered(false)}
     >
-      <meshStandardMaterial color={color} />
+      <meshStandardMaterial 
+        color={color} 
+        emissive={hovered ? color : '#000000'}
+        emissiveIntensity={hovered ? 0.2 : 0}
+        roughness={0.3}
+        metalness={0.7}
+      />
     </Box>
   );
 };
 
-const ServerRack = () => {
+const NetworkConnection = ({ start, end, color = '#00d2ff' }: { 
+  start: [number, number, number], 
+  end: [number, number, number],
+  color?: string 
+}) => {
+  const lineRef = useRef<THREE.BufferGeometry>(null);
+  
+  useFrame((state) => {
+    if (lineRef.current) {
+      const positions = lineRef.current.attributes.position.array as Float32Array;
+      for (let i = 0; i < positions.length; i += 3) {
+        positions[i + 1] += Math.sin(state.clock.elapsedTime * 3 + i) * 0.02;
+      }
+      lineRef.current.attributes.position.needsUpdate = true;
+    }
+  });
+
+  const points = [];
+  for (let i = 0; i <= 20; i++) {
+    const t = i / 20;
+    points.push(new THREE.Vector3(
+      start[0] + (end[0] - start[0]) * t,
+      start[1] + (end[1] - start[1]) * t + Math.sin(t * Math.PI) * 0.3,
+      start[2] + (end[2] - start[2]) * t
+    ));
+  }
+
   return (
-    <group>
-      {/* Server base */}
-      <Box position={[0, -2, 0]} args={[6, 0.2, 3]}>
-        <meshStandardMaterial color="#1a1a2e" />
+    <line>
+      <bufferGeometry ref={lineRef}>
+        <bufferAttribute
+          attach="attributes-position"
+          count={points.length}
+          array={new Float32Array(points.flatMap(p => [p.x, p.y, p.z]))}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      <lineBasicMaterial color={color} linewidth={2} transparent opacity={0.6} />
+    </line>
+  );
+};
+
+const DockerArchitecture = () => {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame((state) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.1;
+    }
+  });
+
+  return (
+    <group ref={groupRef}>
+      {/* Host Operating System */}
+      <Box position={[0, -3, 0]} args={[8, 0.3, 4]}>
+        <meshStandardMaterial color="#2a2a3a" roughness={0.8} metalness={0.2} />
       </Box>
       
-      {/* Docker Engine layer */}
-      <Box position={[0, -1.5, 0]} args={[6, 0.3, 3]}>
-        <meshStandardMaterial color="#00d2ff" opacity={0.7} transparent />
+      {/* Docker Engine */}
+      <Box position={[0, -2.3, 0]} args={[7.5, 0.4, 3.5]}>
+        <meshStandardMaterial 
+          color="#00d2ff" 
+          opacity={0.8} 
+          transparent 
+          emissive="#003d5c"
+          emissiveIntensity={0.3}
+          roughness={0.2}
+          metalness={0.9}
+        />
       </Box>
       
-      {/* Container instances */}
-      <ContainerBox position={[-2, -0.8, 0]} color="#ff6b6b" scale={0.8} />
-      <ContainerBox position={[0, -0.8, 0]} color="#4ecdc4" scale={0.8} />
-      <ContainerBox position={[2, -0.8, 0]} color="#45b7d1" scale={0.8} />
-      <ContainerBox position={[-1, -0.2, 0]} color="#96ceb4" scale={0.8} />
-      <ContainerBox position={[1, -0.2, 0]} color="#ffeaa7" scale={0.8} />
+      {/* Container Layer */}
+      <Box position={[0, -1.7, 0]} args={[7, 0.2, 3]}>
+        <meshStandardMaterial color="#0099cc" opacity={0.6} transparent />
+      </Box>
+      
+      {/* Running Containers */}
+      <AnimatedContainer position={[-2.5, -1, 0]} color="#e74c3c" scale={0.9} delay={0} />
+      <AnimatedContainer position={[-0.8, -1, 0]} color="#2ecc71" scale={0.9} delay={0.5} />
+      <AnimatedContainer position={[0.8, -1, 0]} color="#f39c12" scale={0.9} delay={1} />
+      <AnimatedContainer position={[2.5, -1, 0]} color="#9b59b6" scale={0.9} delay={1.5} />
+      
+      {/* Container Images Stack */}
+      <AnimatedContainer position={[-2.5, -0.2, 1.5]} color="#34495e" scale={0.7} delay={2} />
+      <AnimatedContainer position={[-0.8, -0.2, 1.5]} color="#34495e" scale={0.7} delay={2.2} />
+      <AnimatedContainer position={[0.8, -0.2, 1.5]} color="#34495e" scale={0.7} delay={2.4} />
+      <AnimatedContainer position={[2.5, -0.2, 1.5]} color="#34495e" scale={0.7} delay={2.6} />
+      
+      {/* Registry/Hub */}
+      <Cylinder position={[0, 1, -2]} args={[0.8, 0.8, 1.5, 8]}>
+        <meshStandardMaterial 
+          color="#ff6b6b" 
+          emissive="#ff2d2d"
+          emissiveIntensity={0.2}
+          roughness={0.3}
+          metalness={0.7}
+        />
+      </Cylinder>
+      
+      {/* Network Connections */}
+      <NetworkConnection start={[-2.5, -1, 0]} end={[0, -2.3, 0]} />
+      <NetworkConnection start={[-0.8, -1, 0]} end={[0, -2.3, 0]} />
+      <NetworkConnection start={[0.8, -1, 0]} end={[0, -2.3, 0]} />
+      <NetworkConnection start={[2.5, -1, 0]} end={[0, -2.3, 0]} />
+      
+      {/* Hub to Engine */}
+      <NetworkConnection start={[0, 1, -2]} end={[0, -2.3, 0]} color="#ff6b6b" />
+      
+      {/* Floating Data Packets */}
+      {Array.from({ length: 6 }).map((_, i) => (
+        <Sphere key={i} position={[
+          Math.sin(i * Math.PI / 3) * 3,
+          Math.sin(i * 2) * 0.5,
+          Math.cos(i * Math.PI / 3) * 2
+        ]} args={[0.05]}>
+          <meshStandardMaterial 
+            color="#00ff88" 
+            emissive="#00ff88"
+            emissiveIntensity={0.5}
+          />
+        </Sphere>
+      ))}
     </group>
   );
 };
 
 const DockerScene = () => {
   return (
-    <div className="w-full h-[400px] md:h-[500px] rounded-lg overflow-hidden container-elevated">
-      <Canvas camera={{ position: [8, 4, 8], fov: 50 }}>
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[10, 10, 5]} intensity={1} />
-        <pointLight position={[0, 5, 0]} intensity={0.5} color="#00d2ff" />
+    <div className="w-full h-[400px] md:h-[600px] rounded-lg overflow-hidden container-elevated">
+      <Canvas camera={{ position: [12, 6, 12], fov: 50 }}>
+        {/* Enhanced Lighting */}
+        <ambientLight intensity={0.3} />
+        <directionalLight position={[10, 10, 5]} intensity={0.8} castShadow />
+        <pointLight position={[-5, 5, 5]} intensity={0.4} color="#00d2ff" />
+        <pointLight position={[5, 5, -5]} intensity={0.4} color="#ff6b6b" />
+        <spotLight position={[0, 10, 0]} intensity={0.5} color="#ffffff" angle={0.3} />
         
-        <ServerRack />
+        {/* Fog for depth */}
+        <fog attach="fog" args={['#1a1a2e', 15, 30]} />
+        
+        <DockerArchitecture />
         
         <OrbitControls 
           enableZoom={true}
-          enablePan={false}
-          maxPolarAngle={Math.PI / 2}
-          minDistance={6}
-          maxDistance={15}
+          enablePan={true}
+          maxPolarAngle={Math.PI / 1.8}
+          minPolarAngle={Math.PI / 6}
+          minDistance={8}
+          maxDistance={20}
           autoRotate
-          autoRotateSpeed={0.5}
+          autoRotateSpeed={0.3}
+          enableDamping
+          dampingFactor={0.05}
         />
       </Canvas>
     </div>
