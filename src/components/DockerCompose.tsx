@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Copy, Play, FileText, Layers } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Copy, Play, FileText, Layers, Network, HardDrive, Settings, X, Square, Circle } from 'lucide-react';
 import { toast } from 'sonner';
 
 const dockerComposeExample = `version: '3.8'
@@ -81,48 +81,171 @@ networks:
   app-network:
     driver: bridge`;
 
-const composeCommands = [
-  {
-    command: 'docker compose up',
-    description: 'Build, create, start, and attach to containers for a service'
+const services = [
+  { 
+    name: 'nginx', 
+    color: '#10b981', 
+    ports: ['80:80', '443:443'],
+    image: 'nginx:alpine',
+    volumes: ['./nginx.conf:/etc/nginx/nginx.conf'],
+    position: { x: 50, y: 20 }
   },
-  {
-    command: 'docker compose up -d',
-    description: 'Run containers in detached mode (in the background)'
+  { 
+    name: 'frontend', 
+    color: '#3b82f6', 
+    ports: ['3000:3000'],
+    image: 'custom build',
+    volumes: [],
+    position: { x: 20, y: 50 }
   },
-  {
-    command: 'docker compose down',
-    description: 'Stop and remove containers, networks, images, and volumes'
+  { 
+    name: 'backend', 
+    color: '#f59e0b', 
+    ports: ['5000:5000'],
+    image: 'custom build',
+    volumes: [],
+    position: { x: 80, y: 50 }
   },
-  {
-    command: 'docker compose ps',
-    description: 'List containers for the Compose project'
+  { 
+    name: 'db', 
+    color: '#8b5cf6', 
+    ports: [],
+    image: 'postgres:15-alpine',
+    volumes: ['postgres_data:/var/lib/postgresql/data'],
+    position: { x: 20, y: 80 }
   },
-  {
-    command: 'docker compose logs',
-    description: 'View output from containers'
-  },
-  {
-    command: 'docker compose exec backend bash',
-    description: 'Execute a command in a running service container'
-  },
-  {
-    command: 'docker compose build',
-    description: 'Build or rebuild services'
-  },
-  {
-    command: 'docker compose pull',
-    description: 'Pull service images'
+  { 
+    name: 'redis', 
+    color: '#ef4444', 
+    ports: [],
+    image: 'redis:7-alpine',
+    volumes: ['redis_data:/data'],
+    position: { x: 80, y: 80 }
   }
 ];
 
+const volumes = [
+  { name: 'postgres_data', color: '#8b5cf6', connectedTo: ['db'] },
+  { name: 'redis_data', color: '#ef4444', connectedTo: ['redis'] }
+];
+
+const ServiceModal = ({ service, onClose }: { service: any, onClose: () => void }) => (
+  <AnimatePresence>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="container-surface p-6 rounded-lg max-w-md w-full mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-bold flex items-center gap-2">
+            <div 
+              className="w-4 h-4 rounded" 
+              style={{ backgroundColor: service.color }}
+            />
+            {service.name}
+          </h3>
+          <button 
+            onClick={onClose}
+            className="p-2 hover:bg-secondary rounded-lg transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        
+        <div className="space-y-3">
+          <div>
+            <span className="text-sm font-medium text-muted-foreground">Image:</span>
+            <p className="font-mono text-sm bg-secondary/50 p-2 rounded mt-1">{service.image}</p>
+          </div>
+          
+          {service.ports.length > 0 && (
+            <div>
+              <span className="text-sm font-medium text-muted-foreground">Ports:</span>
+              <ul className="mt-1 space-y-1">
+                {service.ports.map((port: string, i: number) => (
+                  <li key={i} className="font-mono text-sm bg-secondary/50 p-2 rounded">
+                    {port}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          
+          {service.volumes.length > 0 && (
+            <div>
+              <span className="text-sm font-medium text-muted-foreground">Volumes:</span>
+              <ul className="mt-1 space-y-1">
+                {service.volumes.map((volume: string, i: number) => (
+                  <li key={i} className="font-mono text-sm bg-secondary/50 p-2 rounded">
+                    {volume}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  </AnimatePresence>
+);
+
 const DockerCompose = () => {
-  const [selectedTab, setSelectedTab] = useState<'yaml' | 'commands'>('yaml');
+  const [selectedView, setSelectedView] = useState<'overall' | 'services' | 'networking' | 'volumes'>('overall');
+  const [animationStep, setAnimationStep] = useState(0);
+  const [isRunning, setIsRunning] = useState(false);
+  const [selectedService, setSelectedService] = useState<any>(null);
+  const [highlightedLines, setHighlightedLines] = useState<number[]>([]);
+
+  const animationSteps = [
+    { name: 'Parsing YAML', lines: [1, 2] },
+    { name: 'Creating Services', lines: [8, 10, 24, 40, 53, 62] },
+    { name: 'Setting up Networks', lines: [80, 81] },
+    { name: 'Mounting Volumes', lines: [76, 77] },
+    { name: 'Port Mapping', lines: [14, 28, 64, 65] },
+    { name: 'Complete', lines: [] }
+  ];
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast.success('Copied to clipboard!');
   };
+
+  const runCompose = () => {
+    setIsRunning(true);
+    setAnimationStep(0);
+    
+    const interval = setInterval(() => {
+      setAnimationStep(prev => {
+        if (prev >= animationSteps.length - 1) {
+          clearInterval(interval);
+          setIsRunning(false);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 1500);
+  };
+
+  const stopCompose = () => {
+    setAnimationStep(0);
+    setIsRunning(false);
+    setHighlightedLines([]);
+  };
+
+  useEffect(() => {
+    if (animationStep < animationSteps.length) {
+      setHighlightedLines(animationSteps[animationStep].lines);
+    }
+  }, [animationStep]);
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -136,141 +259,220 @@ const DockerCompose = () => {
           Docker <span className="text-gradient">Compose</span>
         </h2>
         <p className="text-muted-foreground max-w-3xl mx-auto">
-          Orchestrate multi-container applications with a single YAML file. 
-          Define your entire stack and manage it with simple commands.
+          Orchestrate multi-container applications with a single YAML file. Define your entire stack and manage it with simple commands.
         </p>
       </motion.div>
 
-      {/* Tabs */}
-      <div className="flex justify-center mb-8">
-        <div className="container-surface p-1 rounded-lg flex">
-          <button
-            onClick={() => setSelectedTab('yaml')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-md transition-all duration-300 ${
-              selectedTab === 'yaml' 
-                ? 'bg-primary text-primary-foreground' 
-                : 'hover:bg-secondary/50'
-            }`}
-          >
-            <FileText className="w-4 h-4" />
-            docker-compose.yml
-          </button>
-          <button
-            onClick={() => setSelectedTab('commands')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-md transition-all duration-300 ${
-              selectedTab === 'commands' 
-                ? 'bg-primary text-primary-foreground' 
-                : 'hover:bg-secondary/50'
-            }`}
-          >
-            <Layers className="w-4 h-4" />
-            Commands
-          </button>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        {/* Left Panel - YAML Editor */}
+        <div className="container-elevated rounded-lg overflow-hidden">
+          <div className="flex items-center justify-between p-4 border-b border-border bg-secondary/50">
+            <div className="flex items-center gap-3">
+              <FileText className="w-5 h-5 text-primary" />
+              <span className="font-semibold">docker-compose.yml</span>
+            </div>
+            <button
+              onClick={() => copyToClipboard(dockerComposeExample)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors"
+            >
+              <Copy className="w-4 h-4" />
+              Copy
+            </button>
+          </div>
+          
+          <div className="p-4 bg-terminal-bg text-terminal-text overflow-auto max-h-[600px]">
+            <pre className="text-xs font-mono leading-relaxed">
+              {dockerComposeExample.split('\n').map((line, index) => (
+                <div
+                  key={index}
+                  className={`${
+                    highlightedLines.includes(index + 1) 
+                      ? 'bg-primary/20 border-l-2 border-primary' 
+                      : ''
+                  } px-2 py-0.5 transition-all duration-300`}
+                >
+                  <span className="text-muted-foreground mr-4 select-none">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <code>{line}</code>
+                </div>
+              ))}
+            </pre>
+          </div>
+        </div>
+
+        {/* Right Panel - Visualization */}
+        <div className="container-elevated rounded-lg overflow-hidden">
+          {/* View Tabs */}
+          <div className="flex border-b border-border bg-secondary/30">
+            {[
+              { key: 'overall', icon: Layers, label: 'Overall' },
+              { key: 'services', icon: Square, label: 'Services' },
+              { key: 'networking', icon: Network, label: 'Networks' },
+              { key: 'volumes', icon: HardDrive, label: 'Volumes' }
+            ].map(({ key, icon: Icon, label }) => (
+              <button
+                key={key}
+                onClick={() => setSelectedView(key as any)}
+                className={`flex items-center gap-2 px-4 py-3 text-sm transition-all duration-300 ${
+                  selectedView === key 
+                    ? 'bg-primary text-primary-foreground border-b-2 border-primary' 
+                    : 'hover:bg-secondary/50'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Visualization Area */}
+          <div className="p-6 bg-gradient-to-br from-background to-secondary/20 min-h-[400px] relative">
+            {/* Host Machine */}
+            <div className="absolute inset-4 border-2 border-dashed border-muted-foreground/30 rounded-lg">
+              <span className="absolute -top-3 left-4 bg-background px-2 text-sm text-muted-foreground">
+                Host Machine
+              </span>
+            </div>
+
+            {/* Network Overlay */}
+            {(selectedView === 'overall' || selectedView === 'networking') && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: animationStep >= 2 ? 0.3 : 0 }}
+                className="absolute inset-8 border-2 border-primary/50 rounded-lg bg-primary/5"
+              >
+                <span className="absolute -top-3 left-4 bg-background px-2 text-sm text-primary">
+                  app-network
+                </span>
+              </motion.div>
+            )}
+
+            {/* Services */}
+            <AnimatePresence>
+              {services.map((service, index) => (
+                <motion.div
+                  key={service.name}
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ 
+                    scale: animationStep >= 1 ? 1 : 0, 
+                    opacity: animationStep >= 1 ? 1 : 0 
+                  }}
+                  transition={{ delay: index * 0.2 }}
+                  className="absolute w-16 h-16 cursor-pointer"
+                  style={{
+                    left: `${service.position.x}%`,
+                    top: `${service.position.y}%`,
+                    transform: 'translate(-50%, -50%)'
+                  }}
+                  onClick={() => setSelectedService(service)}
+                >
+                  <div 
+                    className="w-full h-full rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-lg hover:scale-110 transition-transform"
+                    style={{ backgroundColor: service.color }}
+                  >
+                    {service.name}
+                  </div>
+                  
+                  {/* Port Indicators */}
+                  {service.ports.length > 0 && (selectedView === 'overall' || selectedView === 'services') && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: animationStep >= 4 ? 1 : 0 }}
+                      className="absolute -top-2 -right-2 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center"
+                    >
+                      <span className="text-xs text-white">P</span>
+                    </motion.div>
+                  )}
+                </motion.div>
+              ))}
+            </AnimatePresence>
+
+            {/* Volumes */}
+            {(selectedView === 'overall' || selectedView === 'volumes') && (
+              <div className="absolute bottom-4 left-4 right-4">
+                <div className="flex gap-4">
+                  {volumes.map((volume, index) => (
+                    <motion.div
+                      key={volume.name}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ 
+                        opacity: animationStep >= 3 ? 1 : 0,
+                        y: animationStep >= 3 ? 0 : 20
+                      }}
+                      transition={{ delay: index * 0.3 }}
+                      className="flex items-center gap-2 bg-background border border-border rounded-lg px-3 py-2"
+                    >
+                      <HardDrive className="w-4 h-4" style={{ color: volume.color }} />
+                      <span className="text-xs font-mono">{volume.name}</span>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Animation Status */}
+            {isRunning && (
+              <div className="absolute top-4 right-4 bg-primary text-primary-foreground px-3 py-2 rounded-lg text-sm">
+                {animationSteps[animationStep]?.name}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Content */}
-      <motion.div
-        key={selectedTab}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        {selectedTab === 'yaml' ? (
-          <div className="container-elevated rounded-lg overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-border bg-secondary/50">
-              <div className="flex items-center gap-3">
-                <FileText className="w-5 h-5 text-primary" />
-                <span className="font-semibold">docker-compose.yml</span>
-                <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full">
-                  Full Stack Example
-                </span>
-              </div>
-              <button
-                onClick={() => copyToClipboard(dockerComposeExample)}
-                className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors"
-              >
-                <Copy className="w-4 h-4" />
-                Copy
-              </button>
-            </div>
-            
-            <div className="p-6 bg-terminal-bg text-terminal-text overflow-x-auto">
-              <pre className="text-sm font-mono leading-relaxed">
-                <code>{dockerComposeExample}</code>
-              </pre>
-            </div>
+      {/* Control Panel */}
+      <div className="container-surface p-6 rounded-lg">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold">Docker Compose Controls</h3>
+          <div className="flex gap-2">
+            <button
+              onClick={runCompose}
+              disabled={isRunning}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              <Play className="w-4 h-4" />
+              docker compose up
+            </button>
+            <button
+              onClick={stopCompose}
+              className="flex items-center gap-2 px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors"
+            >
+              <Square className="w-4 h-4" />
+              docker compose down
+            </button>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {composeCommands.map((cmd, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="container-surface p-6 group hover:container-active transition-all duration-300 cursor-pointer"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <code className="text-primary font-mono text-sm bg-primary/10 px-3 py-1.5 rounded-lg">
-                    {cmd.command}
-                  </code>
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => copyToClipboard(cmd.command)}
-                      className="p-2 hover:bg-primary/10 rounded-lg transition-colors"
-                    >
-                      <Copy className="w-4 h-4" />
-                    </button>
-                    <button className="p-2 hover:bg-primary/10 rounded-lg transition-colors">
-                      <Play className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground">{cmd.description}</p>
-              </motion.div>
+        </div>
+
+        {/* Progress Slider */}
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm text-muted-foreground">
+            <span>Progress</span>
+            <span>{animationStep} / {animationSteps.length - 1}</span>
+          </div>
+          <div className="w-full bg-secondary rounded-full h-2">
+            <div 
+              className="bg-primary h-2 rounded-full transition-all duration-300"
+              style={{ width: `${(animationStep / (animationSteps.length - 1)) * 100}%` }}
+            />
+          </div>
+          <div className="flex justify-between text-xs text-muted-foreground">
+            {animationSteps.map((step, index) => (
+              <span key={index} className={index <= animationStep ? 'text-primary' : ''}>
+                {step.name}
+              </span>
             ))}
           </div>
-        )}
-      </motion.div>
-
-      {/* Key Concepts */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8"
-      >
-        <div className="container-surface p-6 text-center">
-          <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-            <Layers className="w-6 h-6 text-primary" />
-          </div>
-          <h3 className="font-semibold mb-2">Multi-Service</h3>
-          <p className="text-sm text-muted-foreground">
-            Define multiple interconnected services in a single file
-          </p>
         </div>
+      </div>
 
-        <div className="container-surface p-6 text-center">
-          <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-            <FileText className="w-6 h-6 text-primary" />
-          </div>
-          <h3 className="font-semibold mb-2">Declarative</h3>
-          <p className="text-sm text-muted-foreground">
-            Describe your desired state, not the steps to get there
-          </p>
-        </div>
-
-        <div className="container-surface p-6 text-center">
-          <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-            <Play className="w-6 h-6 text-primary" />
-          </div>
-          <h3 className="font-semibold mb-2">Simple</h3>
-          <p className="text-sm text-muted-foreground">
-            One command to start your entire application stack
-          </p>
-        </div>
-      </motion.div>
+      {/* Service Modal */}
+      {selectedService && (
+        <ServiceModal 
+          service={selectedService} 
+          onClose={() => setSelectedService(null)} 
+        />
+      )}
     </div>
   );
 };
