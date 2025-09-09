@@ -15,9 +15,12 @@ const dockerCommands = [
   {
     command: 'docker ps',
     output: [
-      'CONTAINER ID   IMAGE     COMMAND                  CREATED          STATUS          PORTS     NAMES',
-      '7f9c8d5a1b3e   nginx     "/docker-entrypoint.…"   2 minutes ago    Up 2 minutes    80/tcp    web-server',
-      '3a1e9b2c4d6f   postgres  "docker-entrypoint.s…"   5 minutes ago    Up 5 minutes    5432/tcp  database'
+      'CONTAINER ID   IMAGE      COMMAND                  CREATED          STATUS          PORTS                    NAMES',
+      '7f9c8d5a1b3e   nginx      "/docker-entrypoint.…"   2 minutes ago    Up 2 minutes    0.0.0.0:80->80/tcp      web-server',
+      '3a1e9b2c4d6f   postgres   "docker-entrypoint.s…"   5 minutes ago    Up 5 minutes    0.0.0.0:5432->5432/tcp  database',
+      '9e2f1a3c7b8d   redis      "docker-entrypoint.s…"   10 minutes ago   Up 10 minutes   0.0.0.0:6379->6379/tcp  cache',
+      '5b7d2e9f4a1c   mongodb    "docker-entrypoint.s…"   15 minutes ago   Up 15 minutes   0.0.0.0:27017->27017/tcp mongo-db',
+      '8c1f6e4b9a2d   mysql      "docker-entrypoint.s…"   20 minutes ago   Up 20 minutes   0.0.0.0:3306->3306/tcp  mysql-server'
     ],
     description: 'List all running containers with their status and details'
   },
@@ -39,7 +42,9 @@ const dockerCommands = [
       'REPOSITORY   TAG       IMAGE ID       CREATED        SIZE',
       'nginx        latest    2ac49d2a5a73   2 weeks ago    142MB',
       'postgres     13        3f5b5e2c1a9b   3 weeks ago    371MB',
-      'node         18        1a2b3c4d5e6f   1 month ago    993MB'
+      'node         18        1a2b3c4d5e6f   1 month ago    993MB',
+      'redis        alpine    8e3c7d2f9a1b   1 month ago    32.2MB',
+      'mongodb      latest    5d7e9f2a8c4b   2 months ago   695MB'
     ],
     description: 'List all locally stored Docker images'
   },

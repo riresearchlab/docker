@@ -15,26 +15,40 @@ const Terminal = ({ commands }: TerminalProps) => {
   const [selectedCommand, setSelectedCommand] = useState(0);
   const [isExecuting, setIsExecuting] = useState(false);
   const [outputLines, setOutputLines] = useState<string[]>([]);
+  const [commandHistory, setCommandHistory] = useState<Array<{command: string, output: string[]}>>([]);
 
   const executeCommand = async (commandIndex: number) => {
     if (isExecuting) return;
     
     setIsExecuting(true);
-    setOutputLines([]);
     setSelectedCommand(commandIndex);
     
     const command = commands[commandIndex];
+    
+    // Add command to history
+    setCommandHistory(prev => [...prev, { command: command.command, output: [] }]);
     
     // Simulate typing the command
     await new Promise(resolve => setTimeout(resolve, 500));
     
     // Add output lines with delay
+    const newOutput: string[] = [];
     for (let i = 0; i < command.output.length; i++) {
       await new Promise(resolve => setTimeout(resolve, 300));
-      setOutputLines(prev => [...prev, command.output[i]]);
+      newOutput.push(command.output[i]);
+      setCommandHistory(prev => {
+        const updated = [...prev];
+        updated[updated.length - 1].output = [...newOutput];
+        return updated;
+      });
     }
     
     setIsExecuting(false);
+  };
+
+  const clearTerminal = () => {
+    setCommandHistory([]);
+    setOutputLines([]);
   };
 
   const copyCommand = (command: string) => {
@@ -93,15 +107,42 @@ const Terminal = ({ commands }: TerminalProps) => {
           <div className="terminal-dot bg-yellow-500"></div>
           <div className="terminal-dot bg-green-500"></div>
           <span className="text-sm text-muted-foreground ml-4">Docker Terminal</span>
+          <button
+            onClick={clearTerminal}
+            className="ml-auto px-3 py-1 text-xs bg-secondary hover:bg-secondary/80 rounded transition-colors"
+          >
+            Clear
+          </button>
         </div>
         
         <div className="terminal-content">
-          <div className="command-line">
-            <span className="command-prompt">$</span>
-            <span className="text-foreground">
-              {commands[selectedCommand]?.command || 'docker --help'}
-            </span>
-            {isExecuting && (
+          {/* Show command history */}
+          {commandHistory.map((historyItem, historyIndex) => (
+            <div key={historyIndex} className="mb-4">
+              <div className="command-line">
+                <span className="command-prompt">$</span>
+                <span className="text-foreground">{historyItem.command}</span>
+              </div>
+              {historyItem.output.map((line, lineIndex) => (
+                <motion.div
+                  key={`${historyIndex}-${lineIndex}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="command-output"
+                >
+                  {line}
+                </motion.div>
+              ))}
+            </div>
+          ))}
+          
+          {/* Current executing command */}
+          {isExecuting && (
+            <div className="command-line">
+              <span className="command-prompt">$</span>
+              <span className="text-foreground">
+                {commands[selectedCommand]?.command || 'docker --help'}
+              </span>
               <motion.span
                 animate={{ opacity: [1, 0, 1] }}
                 transition={{ repeat: Infinity, duration: 1 }}
@@ -109,23 +150,11 @@ const Terminal = ({ commands }: TerminalProps) => {
               >
                 |
               </motion.span>
-            )}
-          </div>
+            </div>
+          )}
           
-          <AnimatePresence>
-            {outputLines.map((line, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="command-output"
-              >
-                {line}
-              </motion.div>
-            ))}
-          </AnimatePresence>
-          
-          {!isExecuting && outputLines.length === 0 && (
+          {/* Empty state */}
+          {!isExecuting && commandHistory.length === 0 && (
             <div className="text-muted-foreground text-sm mt-4">
               Click a command to see its output...
             </div>
