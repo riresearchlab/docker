@@ -120,7 +120,7 @@ const Terminal = ({ commands }: TerminalProps) => {
           {commandHistory.map((historyItem, historyIndex) => (
             <div key={historyIndex} className="mb-4">
               <div className="command-line">
-                <span className="command-prompt">$</span>
+                <span className="command-prompt">admin@ubuntu:~$</span>
                 <span className="text-foreground">{historyItem.command}</span>
               </div>
               {historyItem.output.map((line, lineIndex) => (
@@ -139,9 +139,9 @@ const Terminal = ({ commands }: TerminalProps) => {
           {/* Current executing command */}
           {isExecuting && (
             <div className="command-line">
-              <span className="command-prompt">$</span>
+              <span className="command-prompt">admin@ubuntu:~$</span>
               <span className="text-foreground">
-                {commands[selectedCommand]?.command || 'docker --help'}
+                {commands[selectedCommand]?.command || ''}
               </span>
               <motion.span
                 animate={{ opacity: [1, 0, 1] }}
@@ -155,8 +155,8 @@ const Terminal = ({ commands }: TerminalProps) => {
           
           {/* Empty state */}
           {!isExecuting && commandHistory.length === 0 && (
-            <div className="text-muted-foreground text-sm mt-4">
-              Click a command to see its output...
+            <div className="command-line">
+              <span className="command-prompt">admin@ubuntu:~$</span>
             </div>
           )}
         </div>
