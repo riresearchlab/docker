@@ -161,8 +161,8 @@ const networkTypes = [
 
 const DockerNetworks = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [runningCommand, setRunningCommand] = useState<string | null>(null);
-  const [selectedOutput, setSelectedOutput] = useState<string[]>([]);
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [commandHistory, setCommandHistory] = useState<Array<{command: string, output: string[]}>>([]);
 
   const categories = [
     { id: 'all', label: 'All Commands' },
@@ -183,19 +183,33 @@ const DockerNetworks = () => {
   };
 
   const executeCommand = async (cmd: NetworkCommand) => {
-    setRunningCommand(cmd.command);
-    setSelectedOutput([]);
+    if (isExecuting) return;
     
-    // Simulate command execution
+    setIsExecuting(true);
+    
+    // Add command to history
+    setCommandHistory(prev => [...prev, { command: cmd.command, output: [] }]);
+    
+    // Simulate typing the command
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    // Show output line by line
+    // Add output lines with delay
+    const newOutput: string[] = [];
     for (let i = 0; i < cmd.output.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 200));
-      setSelectedOutput(prev => [...prev, cmd.output[i]]);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      newOutput.push(cmd.output[i]);
+      setCommandHistory(prev => {
+        const updated = [...prev];
+        updated[updated.length - 1].output = [...newOutput];
+        return updated;
+      });
     }
     
-    setRunningCommand(null);
+    setIsExecuting(false);
+  };
+
+  const clearTerminal = () => {
+    setCommandHistory([]);
   };
 
   return (
@@ -289,7 +303,7 @@ const DockerNetworks = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1 }}
               className={`container-surface p-4 cursor-pointer transition-all duration-300 ${
-                runningCommand === cmd.command ? 'container-active' : 'hover:bg-secondary/50'
+                isExecuting ? 'container-active' : 'hover:bg-secondary/50'
               }`}
               onClick={() => executeCommand(cmd)}
             >
@@ -324,53 +338,56 @@ const DockerNetworks = () => {
             <div className="terminal-dot bg-yellow-500"></div>
             <div className="terminal-dot bg-green-500"></div>
             <span className="text-sm text-muted-foreground ml-4">Docker Network Terminal</span>
+            <button
+              onClick={clearTerminal}
+              className="ml-auto px-3 py-1 text-xs bg-secondary hover:bg-secondary/80 rounded transition-colors"
+            >
+              Clear
+            </button>
           </div>
           
           <div className="terminal-content">
-            {runningCommand ? (
-              <div className="space-y-2">
+            {/* Show command history */}
+            {commandHistory.map((historyItem, historyIndex) => (
+              <div key={historyIndex} className="mb-4">
                 <div className="command-line">
-                  <span className="command-prompt">$</span>
-                  <span className="text-foreground">{runningCommand}</span>
-                  <motion.span
-                    animate={{ opacity: [1, 0, 1] }}
-                    transition={{ repeat: Infinity, duration: 1 }}
-                    className="text-primary"
-                  >
-                    |
-                  </motion.span>
+                  <span className="command-prompt">admin@ubuntu:~$</span>
+                  <span className="text-foreground">{historyItem.command}</span>
                 </div>
-                {selectedOutput.map((line, index) => (
+                {historyItem.output.map((line, lineIndex) => (
                   <motion.div
-                    key={index}
+                    key={`${historyIndex}-${lineIndex}`}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="command-output font-mono"
+                    className="command-output"
                   >
                     {line}
                   </motion.div>
                 ))}
               </div>
-            ) : (
-              <div className="space-y-2">
-                <div className="command-line">
-                  <span className="command-prompt">$</span>
-                  <span className="text-foreground">docker network --help</span>
-                </div>
-                {selectedOutput.length > 0 && (
-                  <div className="space-y-1 mt-4">
-                    {selectedOutput.map((line, index) => (
-                      <div key={index} className="command-output font-mono">
-                        {line}
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {selectedOutput.length === 0 && (
-                  <div className="text-muted-foreground text-sm mt-4">
-                    Click a command above to see its output...
-                  </div>
-                )}
+            ))}
+            
+            {/* Current executing command */}
+            {isExecuting && (
+              <div className="command-line">
+                <span className="command-prompt">admin@ubuntu:~$</span>
+                <span className="text-foreground">
+                  {commandHistory[commandHistory.length - 1]?.command || ''}
+                </span>
+                <motion.span
+                  animate={{ opacity: [1, 0, 1] }}
+                  transition={{ repeat: Infinity, duration: 1 }}
+                  className="text-primary"
+                >
+                  |
+                </motion.span>
+              </div>
+            )}
+            
+            {/* Empty state */}
+            {!isExecuting && commandHistory.length === 0 && (
+              <div className="command-line">
+                <span className="command-prompt">admin@ubuntu:~$</span>
               </div>
             )}
           </div>
