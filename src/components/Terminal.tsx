@@ -90,7 +90,13 @@ const Terminal = ({ commands }: TerminalProps) => {
                 >
                   <Copy className="w-4 h-4" />
                 </button>
-                <button className="p-1 hover:bg-primary/10 rounded transition-colors">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    executeCommand(index);
+                  }}
+                  className="p-1 hover:bg-primary/10 rounded transition-colors"
+                >
                   <Play className="w-4 h-4" />
                 </button>
               </div>
