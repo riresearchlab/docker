@@ -71,10 +71,9 @@ const Terminal = ({ commands }: TerminalProps) => {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.1 }}
-            className={`container-surface p-4 cursor-pointer transition-all duration-300 ${
+            className={`container-surface p-4 transition-all duration-300 ${
               selectedCommand === index ? 'container-active' : 'hover:bg-secondary/50'
             }`}
-            onClick={() => executeCommand(index)}
           >
             <div className="flex items-center justify-between mb-2">
               <code className="text-primary font-mono text-sm bg-primary/10 px-2 py-1 rounded">
