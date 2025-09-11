@@ -138,6 +138,12 @@ const Terminal = ({ commands }: TerminalProps) => {
                   {line}
                 </motion.div>
               ))}
+              {/* Add new prompt after completed command */}
+              {!isExecuting && (
+                <div className="command-line mt-2">
+                  <span className="command-prompt">admin@ubuntu:~$</span>
+                </div>
+              )}
             </div>
           ))}
           
