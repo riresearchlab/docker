@@ -380,21 +380,15 @@ const DockerVolumes = () => {
               </div>
             ))}
             
-            {/* Current executing command */}
-            {isExecuting && (
-              <div className="command-line">
-                <span className="command-prompt">admin@ubuntu:~$</span>
-                <span className="text-foreground">
-                  {commandHistory[commandHistory.length - 1]?.command || ''}
-                </span>
-                <motion.span
-                  animate={{ opacity: [1, 0, 1] }}
-                  transition={{ repeat: Infinity, duration: 1 }}
-                  className="text-primary"
-                >
-                  |
-                </motion.span>
-              </div>
+            {/* Current executing command cursor */}
+            {isExecuting && commandHistory.length > 0 && (
+              <motion.span
+                animate={{ opacity: [1, 0, 1] }}
+                transition={{ repeat: Infinity, duration: 1 }}
+                className="text-primary"
+              >
+                |
+              </motion.span>
             )}
             
             {/* Empty state */}
