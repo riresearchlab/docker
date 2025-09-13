@@ -207,9 +207,10 @@ const LogViewer = ({ logs, isFollowing }: { logs: LogEntry[], isFollowing: boole
 };
 
 const DockerLogs = () => {
-  const [selectedCommand, setSelectedCommand] = useState<LogCommand>(logCommands[0]);
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [selectedCommand, setSelectedCommand] = useState(0);
+  const [isExecuting, setIsExecuting] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [commandHistory, setCommandHistory] = useState<Array<{command: string, output: LogEntry[]}>>([]);
 
   const categories = [
     { id: 'all', label: 'All Commands' },
@@ -228,10 +229,38 @@ const DockerLogs = () => {
     toast.success('Command copied to clipboard!');
   };
 
-  const executeCommand = (cmd: LogCommand) => {
-    setSelectedCommand(cmd);
-    setIsFollowing(cmd.category === 'follow');
+  const executeCommand = async (commandIndex: number) => {
+    if (isExecuting) return;
+    
+    setIsExecuting(true);
+    setSelectedCommand(commandIndex);
+    
+    const command = filteredCommands[commandIndex];
+    
+    // Add command to history
+    setCommandHistory(prev => [...prev, { command: command.command, output: [] }]);
+    
+    // Simulate typing the command
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Add output with delay to simulate real-time logs
+    const newOutput: LogEntry[] = [];
+    for (let i = 0; i < command.output.length; i++) {
+      await new Promise(resolve => setTimeout(resolve, 300));
+      newOutput.push(command.output[i]);
+      setCommandHistory(prev => {
+        const updated = [...prev];
+        updated[updated.length - 1].output = [...newOutput];
+        return updated;
+      });
+    }
+    
+    setIsExecuting(false);
     toast.success('Command executed!');
+  };
+
+  const clearTerminal = () => {
+    setCommandHistory([]);
   };
 
   return (
@@ -314,9 +343,9 @@ const DockerLogs = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1 }}
               className={`container-surface p-4 cursor-pointer transition-all duration-300 ${
-                selectedCommand.command === cmd.command ? 'container-active' : 'hover:bg-secondary/50'
+                selectedCommand === index ? 'container-active' : 'hover:bg-secondary/50'
               }`}
-              onClick={() => executeCommand(cmd)}
+              onClick={() => executeCommand(index)}
             >
               <div className="flex items-center justify-between mb-2">
                 <code className="text-primary font-mono text-sm bg-primary/10 px-2 py-1 rounded">
@@ -332,7 +361,13 @@ const DockerLogs = () => {
                   >
                     <Copy className="w-4 h-4" />
                   </button>
-                  <button className="p-1 hover:bg-primary/10 rounded transition-colors">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      executeCommand(index);
+                    }}
+                    className="p-1 hover:bg-primary/10 rounded transition-colors"
+                  >
                     <Play className="w-4 h-4" />
                   </button>
                 </div>
@@ -342,26 +377,86 @@ const DockerLogs = () => {
           ))}
         </div>
 
-        {/* Log Viewer */}
+        {/* Terminal Output */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xl font-semibold flex items-center gap-2">
-              <FileText className="w-5 h-5 text-primary" />
-              Live Log Output
-            </h3>
-            
-            {isFollowing && (
-              <button
-                onClick={() => setIsFollowing(false)}
-                className="flex items-center gap-2 px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-lg text-sm hover:bg-yellow-500/30 transition-colors"
-              >
-                <Pause className="w-4 h-4" />
-                Stop Following
-              </button>
-            )}
-          </div>
+          <h3 className="text-xl font-semibold flex items-center gap-2">
+            <FileText className="w-5 h-5 text-primary" />
+            Docker Log Terminal
+          </h3>
           
-          <LogViewer logs={selectedCommand.output} isFollowing={isFollowing} />
+          <div className="terminal">
+            <div className="terminal-header">
+              <div className="terminal-dot bg-red-500"></div>
+              <div className="terminal-dot bg-yellow-500"></div>
+              <div className="terminal-dot bg-green-500"></div>
+              <span className="text-sm text-muted-foreground ml-4">Docker Logs</span>
+              <button
+                onClick={clearTerminal}
+                className="ml-auto px-3 py-1 text-xs bg-secondary hover:bg-secondary/80 rounded transition-colors"
+              >
+                Clear
+              </button>
+            </div>
+            
+            <div className="terminal-content">
+              {/* Show command history */}
+              {commandHistory.map((historyItem, historyIndex) => (
+                <div key={historyIndex} className="mb-4">
+                  <div className="command-line">
+                    <span className="command-prompt">admin@ubuntu:~$</span>
+                    <span className="text-foreground">{historyItem.command}</span>
+                  </div>
+                  {historyItem.output.map((log, logIndex) => (
+                    <motion.div
+                      key={`${historyIndex}-${logIndex}`}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="command-output flex items-start gap-3 py-1"
+                    >
+                      <span className="text-xs text-muted-foreground font-mono min-w-[100px]">
+                        {new Date(log.timestamp).toLocaleTimeString()}
+                      </span>
+                      <span className={`text-xs px-2 py-0.5 rounded font-mono min-w-[50px] text-center ${
+                        log.level === 'error' ? 'text-red-400 bg-red-500/20' :
+                        log.level === 'warning' ? 'text-yellow-400 bg-yellow-500/20' :
+                        log.level === 'info' ? 'text-blue-400 bg-blue-500/20' :
+                        'text-gray-400 bg-gray-500/20'
+                      }`}>
+                        {log.level.toUpperCase()}
+                      </span>
+                      <span className="text-sm font-mono flex-1">
+                        {log.message}
+                      </span>
+                    </motion.div>
+                  ))}
+                  {/* Add new prompt after completed command */}
+                  {!isExecuting && (
+                    <div className="command-line mt-2">
+                      <span className="command-prompt">admin@ubuntu:~$</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+              
+              {/* Current executing command cursor */}
+              {isExecuting && commandHistory.length > 0 && (
+                <motion.span
+                  animate={{ opacity: [1, 0, 1] }}
+                  transition={{ repeat: Infinity, duration: 1 }}
+                  className="text-primary"
+                >
+                  |
+                </motion.span>
+              )}
+              
+              {/* Empty state */}
+              {!isExecuting && commandHistory.length === 0 && (
+                <div className="command-line">
+                  <span className="command-prompt">admin@ubuntu:~$</span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
