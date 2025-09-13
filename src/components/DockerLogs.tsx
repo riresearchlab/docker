@@ -173,7 +173,7 @@ const LogViewer = ({ logs, isFollowing }: { logs: LogEntry[], isFollowing: boole
         </div>
       </div>
       
-      <div className="terminal-content max-h-80 overflow-y-auto">
+      <div className="terminal-content">
         <AnimatePresence>
           {filteredLogs.map((log, index) => (
             <motion.div
