@@ -138,8 +138,8 @@ const Terminal = ({ commands }: TerminalProps) => {
                   {line}
                 </motion.div>
               ))}
-              {/* Add new prompt after completed command */}
-              {!isExecuting && (
+              {/* Only add new prompt after the last command and when not executing */}
+              {!isExecuting && historyIndex === commandHistory.length - 1 && (
                 <div className="command-line mt-2">
                   <span className="command-prompt">admin@ubuntu:~$</span>
                 </div>
