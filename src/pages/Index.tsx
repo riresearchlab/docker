@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Container, ArrowRight, BookOpen, ExternalLink } from 'lucide-react';
-import Navigation from '../components/Navigation';
 import DockerScene from '../components/DockerScene';
 import Terminal from '../components/Terminal';
 import EnhancedImageGallery from '../components/EnhancedImageGallery';
@@ -11,6 +10,15 @@ import DockerVolumes from '../components/DockerVolumes';
 import DockerLogs from '../components/DockerLogs';
 import DockerInspect from '../components/DockerInspect';
 import DockerfileSection from '../components/DockerfileSection';
+import { 
+  Sidebar, 
+  SidebarProvider, 
+  SidebarContent, 
+  SidebarNavigation, 
+  SidebarHeader, 
+  SidebarFooter, 
+  SidebarTrigger 
+} from '../components/ui/sidebar';
 
 const dockerCommands = [
   {
@@ -124,32 +132,35 @@ const dockerCommands = [
 const Index = () => {
   const [activeSection, setActiveSection] = useState('intro');
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const sections = ['intro', 'cli', 'images', 'networks', 'volumes', 'logs', 'inspect', 'dockerfile', 'compose', 'resources'];
-      const scrollPosition = window.scrollY + 100;
-
-      for (const section of sections) {
-        const element = document.getElementById(section);
-        if (element) {
-          const offsetTop = element.offsetTop;
-          const offsetBottom = offsetTop + element.offsetHeight;
-          
-          if (scrollPosition >= offsetTop && scrollPosition < offsetBottom) {
-            setActiveSection(section);
-            break;
-          }
-        }
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation activeSection={activeSection} onSectionChange={setActiveSection} />
+    <SidebarProvider activeSection={activeSection} onSectionChange={setActiveSection}>
+      <div className="min-h-screen bg-background flex">
+        <Sidebar>
+          <SidebarHeader>
+            <div className="flex items-center gap-3 px-2 py-3">
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center glow-primary">
+                <Container className="w-6 h-6 text-primary-foreground" />
+              </div>
+              <div className="text-xl font-bold text-gradient">
+                Docker Academy
+              </div>
+            </div>
+          </SidebarHeader>
+          <SidebarContent>
+            <SidebarNavigation />
+          </SidebarContent>
+          <SidebarFooter>
+            <div className="text-xs text-muted-foreground text-center p-2">
+              Master containerization. Build the future.
+            </div>
+          </SidebarFooter>
+        </Sidebar>
+        
+        <div className="flex-1 overflow-hidden">
+          <div className="sticky top-0 z-50 flex items-center justify-between p-4 bg-background/80 backdrop-blur-lg border-b border-border">
+            <SidebarTrigger />
+            <div className="text-lg font-bold">Docker Academy</div>
+          </div>
       
       {/* Hero Section */}
       <section id="intro" className="hero-gradient min-h-screen flex items-center justify-center pt-20">
@@ -385,8 +396,10 @@ const Index = () => {
           </p>
         </div>
       </footer>
-    </div>
-  );
+          </div>
+        </div>
+      </SidebarProvider>
+    );
 };
 
 export default Index;

@@ -1,7 +1,8 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { VariantProps, cva } from "class-variance-authority";
-import { PanelLeft } from "lucide-react";
+import { PanelLeft, Container, Terminal, Package, Layers, BookOpen, Network, HardDrive, FileText, Search, File } from "lucide-react";
+import { motion } from "framer-motion";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -27,7 +28,24 @@ type SidebarContext = {
   setOpenMobile: (open: boolean) => void;
   isMobile: boolean;
   toggleSidebar: () => void;
+  activeSection: string;
+  setActiveSection: (section: string) => void;
+  scrollToSection: (sectionId: string) => void;
 };
+
+// Define navigation items for Docker sections
+const navigationItems = [
+  { id: 'intro', label: 'What is Docker?', icon: Container },
+  { id: 'cli', label: 'Docker CLI', icon: Terminal },
+  { id: 'images', label: 'Popular Images', icon: Package },
+  { id: 'networks', label: 'Networks', icon: Network },
+  { id: 'volumes', label: 'Volumes', icon: HardDrive },
+  { id: 'logs', label: 'Logs', icon: FileText },
+  { id: 'inspect', label: 'Inspect', icon: Search },
+  { id: 'dockerfile', label: 'Dockerfile', icon: File },
+  { id: 'compose', label: 'Docker Compose', icon: Layers },
+  { id: 'resources', label: 'Resources', icon: BookOpen },
+];
 
 const SidebarContext = React.createContext<SidebarContext | null>(null);
 
@@ -46,15 +64,20 @@ const SidebarProvider = React.forwardRef<
     defaultOpen?: boolean;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
+    activeSection?: string;
+    onSectionChange?: (section: string) => void;
   }
->(({ defaultOpen = true, open: openProp, onOpenChange: setOpenProp, className, style, children, ...props }, ref) => {
+>(({ defaultOpen = true, open: openProp, onOpenChange: setOpenProp, activeSection: activeSectionProp, onSectionChange: setActiveSectionProp, className, style, children, ...props }, ref) => {
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = React.useState(false);
+  const [_activeSection, _setActiveSection] = React.useState('intro');
 
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
   const [_open, _setOpen] = React.useState(defaultOpen);
   const open = openProp ?? _open;
+  const activeSection = activeSectionProp ?? _activeSection;
+  
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
       const openState = typeof value === "function" ? value(open) : value;
@@ -68,6 +91,34 @@ const SidebarProvider = React.forwardRef<
       document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
     },
     [setOpenProp, open],
+  );
+
+  const setActiveSection = React.useCallback(
+    (section: string) => {
+      if (setActiveSectionProp) {
+        setActiveSectionProp(section);
+      } else {
+        _setActiveSection(section);
+      }
+    },
+    [setActiveSectionProp],
+  );
+
+  // Function to scroll to a section
+  const scrollToSection = React.useCallback(
+    (sectionId: string) => {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+        setActiveSection(sectionId);
+        
+        // Close mobile sidebar after selection
+        if (isMobile) {
+          setOpenMobile(false);
+        }
+      }
+    },
+    [isMobile, setActiveSection, setOpenMobile],
   );
 
   // Helper to toggle the sidebar.
@@ -88,6 +139,30 @@ const SidebarProvider = React.forwardRef<
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [toggleSidebar]);
 
+  // Track active section based on scroll position
+  React.useEffect(() => {
+    const handleScroll = () => {
+      const sections = navigationItems.map(item => item.id);
+      const scrollPosition = window.scrollY + 100;
+
+      for (const section of sections) {
+        const element = document.getElementById(section);
+        if (element) {
+          const offsetTop = element.offsetTop;
+          const offsetBottom = offsetTop + element.offsetHeight;
+          
+          if (scrollPosition >= offsetTop && scrollPosition < offsetBottom) {
+            setActiveSection(section);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [setActiveSection]);
+
   // We add a state so that we can do data-state="expanded" or "collapsed".
   // This makes it easier to style the sidebar with Tailwind classes.
   const state = open ? "expanded" : "collapsed";
@@ -101,8 +176,11 @@ const SidebarProvider = React.forwardRef<
       openMobile,
       setOpenMobile,
       toggleSidebar,
+      activeSection,
+      setActiveSection,
+      scrollToSection,
     }),
-    [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar],
+    [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar, activeSection, setActiveSection, scrollToSection],
   );
 
   return (
@@ -406,6 +484,36 @@ const SidebarMenu = React.forwardRef<HTMLUListElement, React.ComponentProps<"ul"
 ));
 SidebarMenu.displayName = "SidebarMenu";
 
+// Navigation menu component that uses the navigation items
+const SidebarNavigation = React.forwardRef<HTMLDivElement, React.ComponentProps<"div">>(({ className, ...props }, ref) => {
+  const { activeSection, scrollToSection } = useSidebar();
+  
+  return (
+    <div ref={ref} className={cn("flex flex-col gap-1 py-2", className)} {...props}>
+      <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+      <SidebarMenu>
+        {navigationItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = activeSection === item.id;
+          
+          return (
+            <SidebarMenuItem key={item.id}>
+              <SidebarMenuButton 
+                onClick={() => scrollToSection(item.id)}
+                isActive={isActive}
+              >
+                <Icon className="w-4 h-4" />
+                <span>{item.label}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          );
+        })}
+      </SidebarMenu>
+    </div>
+  );
+});
+SidebarNavigation.displayName = "SidebarNavigation";
+
 const SidebarMenuItem = React.forwardRef<HTMLLIElement, React.ComponentProps<"li">>(({ className, ...props }, ref) => (
   <li ref={ref} data-sidebar="menu-item" className={cn("group/menu-item relative", className)} {...props} />
 ));
@@ -629,9 +737,11 @@ export {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  SidebarNavigation,
   SidebarProvider,
   SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
   useSidebar,
+  navigationItems,
 };
