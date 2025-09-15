@@ -304,8 +304,8 @@ const DockerLogs = () => {
             <div className="text-4xl mb-3">{type.icon}</div>
             <h3 className={`font-semibold text-lg mb-2 ${type.color}`}>{type.name}</h3>
             <p className="text-sm text-muted-foreground">{type.desc}</p>
-          </motion.div>
-        ))}
+            </motion.div>
+          ))}
       </motion.div>
 
       {/* Command Categories */}
@@ -328,14 +328,15 @@ const DockerLogs = () => {
       </div>
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         {/* Command List */}
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
+        <div className="space-y-4 h-full flex flex-col">
+          <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <Terminal className="w-5 h-5 text-primary" />
             Logging Commands
           </h3>
           
+          <div className="overflow-auto flex-grow">
           {filteredCommands.map((cmd, index) => (
             <motion.div
               key={index}
@@ -375,16 +376,17 @@ const DockerLogs = () => {
               <p className="text-sm text-muted-foreground">{cmd.description}</p>
             </motion.div>
           ))}
+          </div>
         </div>
 
         {/* Terminal Output */}
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold flex items-center gap-2">
+        <div className="space-y-4 h-full flex flex-col">
+          <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <FileText className="w-5 h-5 text-primary" />
             Docker Log Terminal
           </h3>
           
-          <div className="terminal">
+          <div className="terminal h-full flex flex-col flex-grow">
             <div className="terminal-header">
               <div className="terminal-dot bg-red-500"></div>
               <div className="terminal-dot bg-yellow-500"></div>
@@ -398,7 +400,7 @@ const DockerLogs = () => {
               </button>
             </div>
             
-            <div className="terminal-content">
+            <div className="terminal-content flex-grow">
               {/* Show command history */}
               {commandHistory.map((historyItem, historyIndex) => (
                 <div key={historyIndex} className="mb-4">

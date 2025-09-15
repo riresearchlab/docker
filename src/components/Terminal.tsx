@@ -59,12 +59,13 @@ const Terminal = ({ commands }: TerminalProps) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
       {/* Command List */}
-      <div className="space-y-4">
+      <div className="space-y-4 h-full flex flex-col">
         <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
           <TerminalIcon className="w-5 h-5 text-primary" />
           Docker Commands
         </h3>
         
+        <div className="overflow-auto flex-grow">
         {commands.map((cmd, index) => (
           <motion.div
             key={index}
@@ -103,11 +104,12 @@ const Terminal = ({ commands }: TerminalProps) => {
             <p className="text-sm text-muted-foreground">{cmd.description}</p>
           </motion.div>
         ))}
+        </div>
       </div>
 
       {/* Terminal Output */}
-      <div className="terminal">
-        <div className="terminal-header">
+      <div className="terminal h-full flex flex-col">
+        <div className="terminal-header flex-shrink-0">
           <div className="terminal-dot bg-red-500"></div>
           <div className="terminal-dot bg-yellow-500"></div>
           <div className="terminal-dot bg-green-500"></div>
@@ -120,7 +122,7 @@ const Terminal = ({ commands }: TerminalProps) => {
           </button>
         </div>
         
-        <div className="terminal-content">
+        <div className="terminal-content flex-grow">
           {/* Show command history */}
           {commandHistory.map((historyItem, historyIndex) => (
             <div key={historyIndex} className="mb-4">
