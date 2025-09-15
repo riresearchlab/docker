@@ -17,7 +17,8 @@ import {
   SidebarNavigation, 
   SidebarHeader, 
   SidebarFooter, 
-  SidebarTrigger 
+  SidebarTrigger,
+  SidebarSeparator
 } from '../components/ui/sidebar';
 
 const dockerCommands = [
@@ -137,20 +138,19 @@ const Index = () => {
       <div className="min-h-screen bg-background flex">
         <Sidebar>
           <SidebarHeader>
-            <div className="flex items-center gap-3 px-2 py-3">
+            <div className="flex items-center justify-center px-2 py-3">
               <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center glow-primary">
                 <Container className="w-6 h-6 text-primary-foreground" />
               </div>
-              <div className="text-xl font-bold text-gradient">
-                Docker Academy
-              </div>
             </div>
+            <SidebarSeparator />
           </SidebarHeader>
           <SidebarContent>
             <SidebarNavigation />
           </SidebarContent>
           <SidebarFooter>
-            <div className="text-xs text-muted-foreground text-center p-2">
+            <SidebarSeparator />
+            <div className="text-xs text-muted-foreground text-center p-2 opacity-70 hover:opacity-100 transition-opacity duration-300">
               Master containerization. Build the future.
             </div>
           </SidebarFooter>
@@ -389,7 +389,6 @@ const Index = () => {
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <Container className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="text-lg font-bold text-gradient">Docker Academy</span>
           </div>
           <p className="text-muted-foreground">
             Master containerization. Build the future.
