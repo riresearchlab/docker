@@ -52,7 +52,7 @@ const sampleInspectData: InspectData = {
     Pid: 12345,
     StartedAt: "2024-01-15T10:30:15.123456789Z",
   },
-  Image: "sha256:f652ca386ed135a4cca2f313a72a2d8af0e8d4d8d8c8c8c8c8c8c8c8c8c8c8c8",
+  Image: "sha256:b2ad206a9ee353de12daa7bc8944ea09a6b54b9b132358e94bcbca288ccc2d70",
   Config: {
     Hostname: "7f9c8d5a1b3e",
     ExposedPorts: {

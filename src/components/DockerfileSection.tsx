@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { File, Code, Layers, CheckCircle, XCircle, GitBranch, ArrowRight } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { cn } from '@/lib/utils';
 
 interface DockerfileKeyword {
   keyword: string;
@@ -532,49 +533,44 @@ CMD ["nginx", "-g", "daemon off;"]
                   </ul>
                 </div>
 
-                <div className="bg-secondary/20 p-6 rounded-lg">
-                  <div className="relative h-80">
-                    {/* Base Image Layer */}
-                    <div className="absolute bottom-0 left-0 right-0 h-16 bg-blue-500/20 border border-blue-500/30 rounded-md flex items-center justify-center">
-                      <div className="text-sm font-medium">Base Image (FROM)</div>
-                    </div>
-                    
-                    {/* RUN Layer */}
-                    <div className="absolute bottom-16 left-4 right-4 h-14 bg-green-500/20 border border-green-500/30 rounded-md flex items-center justify-center">
-                      <div className="text-sm font-medium">RUN apt-get update && install</div>
-                    </div>
-                    
-                    {/* COPY Layer */}
-                    <div className="absolute bottom-30 left-8 right-8 h-12 bg-purple-500/20 border border-purple-500/30 rounded-md flex items-center justify-center">
-                      <div className="text-sm font-medium">COPY app files</div>
-                    </div>
-                    
-                    {/* WORKDIR Layer */}
-                    <div className="absolute bottom-42 left-12 right-12 h-10 bg-yellow-500/20 border border-yellow-500/30 rounded-md flex items-center justify-center">
-                      <div className="text-sm font-medium">WORKDIR /app</div>
-                    </div>
-                    
-                    {/* CMD Layer */}
-                    <div className="absolute bottom-52 left-16 right-16 h-10 bg-red-500/20 border border-red-500/30 rounded-md flex items-center justify-center">
-                      <div className="text-sm font-medium">CMD ["npm", "start"]</div>
-                    </div>
-                    
-                    {/* Container Layer */}
-                    <div className="absolute bottom-62 left-20 right-20 h-10 bg-primary/20 border border-primary/30 rounded-md flex items-center justify-center">
-                      <div className="text-sm font-medium">Container (Writable Layer)</div>
-                    </div>
-
-                    {/* Connecting Lines */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
-                            <polygon points="0 0, 10 3.5, 0 7" fill="currentColor" className="text-muted-foreground" />
-                          </marker>
-                        </defs>
-                        <line x1="50%" y1="15%" x2="50%" y2="95%" stroke="currentColor" strokeWidth="1" strokeDasharray="4" className="text-muted-foreground" markerEnd="url(#arrowhead)" />
-                      </svg>
-                    </div>
+                <div className="bg-secondary/20 p-6 rounded-lg flex items-end justify-center h-96 relative overflow-visible">
+                  <div className="w-full h-full relative">
+                    {(() => {
+                      const layers = [
+                        { name: 'Base Image (FROM)', className: 'bg-blue-500/20 border-blue-500/30', size: 6 },
+                        { name: 'RUN apt-get update && install', className: 'bg-green-500/20 border-green-500/30', size: 5 },
+                        { name: 'COPY app files', className: 'bg-purple-500/20 border-purple-500/30', size: 4 },
+                        { name: 'WORKDIR /app', className: 'bg-yellow-500/20 border-yellow-500/30', size: 3 },
+                        { name: 'CMD ["npm", "start"]', className: 'bg-red-500/20 border-red-500/30', size: 3 },
+                        { name: 'Container (Writable Layer)', className: 'bg-primary/20 border-primary/30', size: 3 },
+                      ];
+                      let cumulativeHeight = 0;
+                      return layers.map((layer, index) => {
+                        const bottom = cumulativeHeight;
+                        const height = layer.size * 16;
+                        cumulativeHeight += height;
+                        return (
+                          <motion.div
+                            key={index}
+                            initial={{ opacity: 0, y: 50 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: index * 0.1, duration: 0.5 }}
+                            className={cn(
+                              'absolute left-0 right-0 mx-auto border rounded-md flex items-center justify-center text-center',
+                              layer.className
+                            )}
+                            style={{
+                              bottom: `${bottom}px`,
+                              height: `${height}px`,
+                              width: `${100 - index * 10}%`,
+                            }}
+                          >
+                            <div className="text-sm font-medium px-2">{layer.name}</div>
+                          </motion.div>
+                        );
+                      });
+                    })()}
                   </div>
                 </div>
               </div>
@@ -702,7 +698,7 @@ CMD ["nginx", "-g", "daemon off;"]
                       <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                       <div>
                         <h5 className="font-medium">Separation of build and runtime environments</h5>
-                        <p className="text-sm text-muted-foreground">Build tools aren't included in the production image</p>
+                        <p className="text-sm text-muted-foreground">Build tools aren\'t included in the production image</p>
                       </div>
                     </li>
                     <li className="flex items-start gap-2">
