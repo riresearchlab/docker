@@ -10,6 +10,7 @@ import DockerNetworks from '../components/DockerNetworks';
 import DockerVolumes from '../components/DockerVolumes';
 import DockerLogs from '../components/DockerLogs';
 import DockerInspect from '../components/DockerInspect';
+import DockerfileSection from '../components/DockerfileSection';
 
 const dockerCommands = [
   {
@@ -125,7 +126,7 @@ const Index = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      const sections = ['intro', 'cli', 'images', 'networks', 'volumes', 'logs', 'inspect', 'compose', 'resources'];
+      const sections = ['intro', 'cli', 'images', 'networks', 'volumes', 'logs', 'inspect', 'dockerfile', 'compose', 'resources'];
       const scrollPosition = window.scrollY + 100;
 
       for (const section of sections) {
@@ -270,8 +271,15 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Dockerfile Section */}
+      <section id="dockerfile" className="py-20">
+        <div className="container mx-auto px-6">
+          <DockerfileSection />
+        </div>
+      </section>
+
       {/* Docker Compose Section */}
-      <section id="compose" className="py-20">
+      <section id="compose" className="py-20 bg-secondary/20">
         <div className="container mx-auto px-6">
           <DockerCompose />
         </div>

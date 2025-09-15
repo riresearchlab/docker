@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Container, Terminal, Package, Layers, BookOpen, Network, HardDrive, FileText, Search } from 'lucide-react';
+import { Container, Terminal, Package, Layers, BookOpen, Network, HardDrive, FileText, Search, File } from 'lucide-react';
 
 interface NavigationProps {
   activeSection: string;
@@ -18,6 +18,7 @@ const Navigation = ({ activeSection, onSectionChange }: NavigationProps) => {
     { id: 'volumes', label: 'Volumes', icon: HardDrive },
     { id: 'logs', label: 'Logs', icon: FileText },
     { id: 'inspect', label: 'Inspect', icon: Search },
+    { id: 'dockerfile', label: 'Dockerfile', icon: File },
     { id: 'compose', label: 'Docker Compose', icon: Layers },
     { id: 'resources', label: 'Resources', icon: BookOpen },
   ];
