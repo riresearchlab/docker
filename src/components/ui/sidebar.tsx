@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { VariantProps, cva } from "class-variance-authority";
-import { PanelLeft, Container, Terminal, Package, Layers, BookOpen, Network, HardDrive, FileText, Search, File, ChevronsLeft, X, Menu } from "lucide-react";
+import { PanelLeft, Container, Terminal, Package, Layers, BookOpen, Network, HardDrive, FileText, Search, File, ChevronsLeft, X, Menu, ChevronsRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -222,14 +222,19 @@ const SidebarToggle = React.forwardRef<
       size="icon"
       className={cn(
         "h-8 w-8 rounded-lg dark:hover:bg-primary/10 transition-all duration-200",
-        "absolute top-3 right-3",
-        state === 'collapsed' && 'hidden',
+        "absolute top-3",
+        state === 'expanded' && "right-3",
+        state === 'collapsed' && "left-1/2 -translate-x-1/2",
         className
       )}
       {...props}
     >
-      <ChevronsLeft className="h-4 w-4 text-primary" />
-      <span className="sr-only">Collapse sidebar</span>
+      {state === 'expanded' ? (
+        <ChevronsLeft className="h-4 w-4 text-primary" />
+      ) : (
+        <ChevronsRight className="h-4 w-4 text-primary" />
+      )}
+      <span className="sr-only">{state === 'expanded' ? 'Collapse sidebar' : 'Expand sidebar'}</span>
     </Button>
   );
 });
@@ -259,33 +264,21 @@ const Sidebar = React.forwardRef<
 
   if (isMobile) {
     return (
-      <>
-        <div className="md:hidden p-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setOpenMobile(!openMobile)}
-            className="text-foreground"
-          >
-            {openMobile ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </Button>
-        </div>
-        <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
-          <SheetContent
-            data-sidebar="sidebar"
-            data-mobile="true"
-            className="w-[--sidebar-width] max-w-[85vw] bg-background p-0 text-foreground [&>button]:hidden"
-            style={
-              {
-                "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
-              } as React.CSSProperties
-            }
-            side={side}
-          >
-            <div className="flex h-full w-full flex-col">{children}</div>
-          </SheetContent>
-        </Sheet>
-      </>
+      <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
+        <SheetContent
+          data-sidebar="sidebar"
+          data-mobile="true"
+          className="w-[--sidebar-width] max-w-[85vw] bg-background p-0 text-foreground [&>button]:hidden"
+          style={
+            {
+              "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
+            } as React.CSSProperties
+          }
+          side={side}
+        >
+          <div className="flex h-full w-full flex-col">{children}</div>
+        </SheetContent>
+      </Sheet>
     );
   }
 
@@ -338,7 +331,7 @@ Sidebar.displayName = "Sidebar";
 
 const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.ComponentProps<typeof Button>>(
   ({ className, onClick, ...props }, ref) => {
-    const { toggleSidebar } = useSidebar();
+    const { toggleSidebar, isMobile, openMobile } = useSidebar();
 
     return (
       <motion.div
@@ -358,7 +351,11 @@ const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.C
           }}
           {...props}
         >
-          <PanelLeft className="text-primary" />
+          {isMobile ? (
+            openMobile ? <X className="w-6 h-6 text-primary" /> : <Menu className="w-6 h-6 text-primary" />
+          ) : (
+            <PanelLeft className="text-primary" />
+          )}
           <span className="sr-only">Toggle Sidebar</span>
         </Button>
       </motion.div>

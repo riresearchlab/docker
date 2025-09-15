@@ -150,9 +150,6 @@ const Index = () => {
           </SidebarContent>
           <SidebarFooter>
             <SidebarSeparator />
-            <div className="text-xs text-muted-foreground text-center p-2 opacity-70 hover:opacity-100 transition-opacity duration-300">
-              Master containerization. Build the future.
-            </div>
           </SidebarFooter>
         </Sidebar>
         
@@ -390,9 +387,6 @@ const Index = () => {
               <Container className="w-5 h-5 text-primary-foreground" />
             </div>
           </div>
-          <p className="text-muted-foreground">
-            Master containerization. Build the future.
-          </p>
         </div>
       </footer>
           </div>
