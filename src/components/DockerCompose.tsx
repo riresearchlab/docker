@@ -88,7 +88,8 @@ const services = [
     ports: ['80:80', '443:443'],
     image: 'nginx:alpine',
     volumes: ['./nginx.conf:/etc/nginx/nginx.conf'],
-    position: { x: 50, y: 20 }
+    position: { x: 50, y: 20 },
+    networks: ['app-network']
   },
   { 
     name: 'frontend', 
@@ -96,7 +97,8 @@ const services = [
     ports: ['3000:3000'],
     image: 'custom build',
     volumes: [],
-    position: { x: 20, y: 50 }
+    position: { x: 20, y: 50 },
+    networks: ['app-network']
   },
   { 
     name: 'backend', 
@@ -104,7 +106,8 @@ const services = [
     ports: ['5000:5000'],
     image: 'custom build',
     volumes: [],
-    position: { x: 80, y: 50 }
+    position: { x: 80, y: 50 },
+    networks: ['app-network']
   },
   { 
     name: 'db', 
@@ -112,7 +115,8 @@ const services = [
     ports: [],
     image: 'postgres:15-alpine',
     volumes: ['postgres_data:/var/lib/postgresql/data'],
-    position: { x: 20, y: 80 }
+    position: { x: 20, y: 80 },
+    networks: ['app-network']
   },
   { 
     name: 'redis', 
@@ -120,7 +124,8 @@ const services = [
     ports: [],
     image: 'redis:7-alpine',
     volumes: ['redis_data:/data'],
-    position: { x: 80, y: 80 }
+    position: { x: 80, y: 80 },
+    networks: ['app-network']
   }
 ];
 
@@ -128,6 +133,40 @@ const volumes = [
   { name: 'postgres_data', color: '#8b5cf6', connectedTo: ['db'] },
   { name: 'redis_data', color: '#ef4444', connectedTo: ['redis'] }
 ];
+
+const networks = [
+  { 
+    name: 'app-network', 
+    color: '#0ea5e9', 
+    driver: 'bridge',
+    subnet: '172.20.0.0/16',
+    connectedServices: ['nginx', 'frontend', 'backend', 'db', 'redis'] 
+  }
+];
+
+interface ServiceType {
+  name: string;
+  color: string;
+  ports: string[];
+  image: string;
+  volumes: string[];
+  position: { x: number; y: number };
+  networks: string[];
+}
+
+interface NetworkType {
+  name: string;
+  color: string;
+  driver: string;
+  subnet: string;
+  connectedServices: string[];
+}
+
+interface VolumeType {
+  name: string;
+  color: string;
+  connectedTo: string[];
+}
 
 const ServiceModal = ({ service, onClose }: { service: any, onClose: () => void }) => (
   <AnimatePresence>
@@ -192,6 +231,19 @@ const ServiceModal = ({ service, onClose }: { service: any, onClose: () => void 
               </ul>
             </div>
           )}
+          
+          {service.networks && service.networks.length > 0 && (
+            <div>
+              <span className="text-sm font-medium text-muted-foreground">Networks:</span>
+              <ul className="mt-1 space-y-1">
+                {service.networks.map((network: string, i: number) => (
+                  <li key={i} className="font-mono text-sm bg-secondary/50 p-2 rounded">
+                    {network}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </motion.div>
     </motion.div>
@@ -203,6 +255,8 @@ const DockerCompose = () => {
   const [animationStep, setAnimationStep] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [selectedService, setSelectedService] = useState<any>(null);
+  const [selectedNetwork, setSelectedNetwork] = useState<any>(null);
+  const [selectedVolume, setSelectedVolume] = useState<any>(null);
   const [highlightedLines, setHighlightedLines] = useState<number[]>([]);
 
   const animationSteps = [
@@ -340,11 +394,49 @@ const DockerCompose = () => {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: animationStep >= 2 ? 0.3 : 0 }}
-                className="absolute inset-8 border-2 border-primary/50 rounded-lg bg-primary/5"
+                className="absolute inset-8 border-2 border-primary/50 rounded-lg bg-primary/5 cursor-pointer"
+                onClick={() => setSelectedNetwork(networks[0])}
               >
                 <span className="absolute -top-3 left-4 bg-background px-2 text-sm text-primary">
                   app-network
                 </span>
+                
+                {/* Network Connections */}
+                {animationStep >= 2 && services.map((service) => (
+                  <motion.div 
+                    key={`network-line-${service.name}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="absolute border-2 border-primary/30"
+                    style={{
+                      left: `${service.position.x}%`,
+                      top: `${service.position.y}%`,
+                      width: '1px',  // Line width
+                      height: '1px',
+                      zIndex: 5
+                    }}
+                  />
+                ))}
+                
+                {/* Network IP Addresses */}
+                {animationStep >= 2 && services.map((service, index) => (
+                  <motion.div
+                    key={`network-ip-${service.name}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 + index * 0.1 }}
+                    className="absolute bg-primary/10 text-primary text-xs px-1 rounded"
+                    style={{
+                      left: `${service.position.x + 3}%`,
+                      top: `${service.position.y - 3}%`,
+                      transform: 'translate(-50%, -50%)',
+                      zIndex: 6
+                    }}
+                  >
+                    172.20.0.{index + 2}
+                  </motion.div>
+                ))}
               </motion.div>
             )}
 
@@ -401,13 +493,39 @@ const DockerCompose = () => {
                         y: animationStep >= 3 ? 0 : 20
                       }}
                       transition={{ delay: index * 0.3 }}
-                      className="flex items-center gap-2 bg-background border border-border rounded-lg px-3 py-2"
+                      className="flex items-center gap-2 bg-background border border-border rounded-lg px-3 py-2 cursor-pointer hover:bg-secondary/20 transition-colors"
+                      onClick={() => setSelectedVolume(volume)}
                     >
                       <HardDrive className="w-4 h-4" style={{ color: volume.color }} />
                       <span className="text-xs font-mono">{volume.name}</span>
                     </motion.div>
                   ))}
                 </div>
+                
+                {/* Volume Connections */}
+                {animationStep >= 3 && volumes.map((volume) => (
+                  volume.connectedTo.map((serviceName) => {
+                    const service = services.find(s => s.name === serviceName);
+                    if (!service) return null;
+                    
+                    return (
+                      <motion.div
+                        key={`volume-connection-${volume.name}-${serviceName}`}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 0.6 }}
+                        className="absolute border-dashed border-2"
+                        style={{
+                          borderColor: volume.color,
+                          left: `${service.position.x}%`,
+                          top: `${service.position.y}%`,
+                          width: '1px',
+                          height: '40px',
+                          transform: 'translate(0, 20px)'
+                        }}
+                      />
+                    );
+                  })
+                ))}
               </div>
             )}
 
@@ -472,6 +590,80 @@ const DockerCompose = () => {
           service={selectedService} 
           onClose={() => setSelectedService(null)} 
         />
+      )}
+      
+      {/* Network Modal */}
+      {selectedNetwork && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedNetwork(null)}>
+          <div className="container-surface p-6 rounded-lg max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <div className="w-4 h-4 rounded" style={{ backgroundColor: selectedNetwork.color }} />
+                {selectedNetwork.name}
+              </h3>
+              <button onClick={() => setSelectedNetwork(null)} className="p-2 hover:bg-secondary rounded-lg transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <span className="text-sm font-medium text-muted-foreground">Driver:</span>
+                <p className="font-mono text-sm bg-secondary/50 p-2 rounded mt-1">{selectedNetwork.driver}</p>
+              </div>
+              <div>
+                <span className="text-sm font-medium text-muted-foreground">Subnet:</span>
+                <p className="font-mono text-sm bg-secondary/50 p-2 rounded mt-1">{selectedNetwork.subnet}</p>
+              </div>
+              {selectedNetwork.connectedServices.length > 0 && (
+                <div>
+                  <span className="text-sm font-medium text-muted-foreground">Connected Services:</span>
+                  <ul className="mt-1 space-y-1">
+                    {selectedNetwork.connectedServices.map((service, i) => (
+                      <li key={i} className="font-mono text-sm bg-secondary/50 p-2 rounded">{service}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Volume Modal */}
+      {selectedVolume && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedVolume(null)}>
+          <div className="container-surface p-6 rounded-lg max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <div className="w-4 h-4 rounded" style={{ backgroundColor: selectedVolume.color }} />
+                {selectedVolume.name}
+              </h3>
+              <button onClick={() => setSelectedVolume(null)} className="p-2 hover:bg-secondary rounded-lg transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <span className="text-sm font-medium text-muted-foreground">Type:</span>
+                <p className="font-mono text-sm bg-secondary/50 p-2 rounded mt-1">local</p>
+              </div>
+              <div>
+                <span className="text-sm font-medium text-muted-foreground">Mount Path:</span>
+                <p className="font-mono text-sm bg-secondary/50 p-2 rounded mt-1">/var/lib/docker/volumes/{selectedVolume.name}/_data</p>
+              </div>
+              {selectedVolume.connectedTo.length > 0 && (
+                <div>
+                  <span className="text-sm font-medium text-muted-foreground">Connected To:</span>
+                  <ul className="mt-1 space-y-1">
+                    {selectedVolume.connectedTo.map((service, i) => (
+                      <li key={i} className="font-mono text-sm bg-secondary/50 p-2 rounded">{service}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
