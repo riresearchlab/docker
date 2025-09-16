@@ -138,9 +138,7 @@ const Index = () => {
       <div className="min-h-screen bg-background flex">
         <Sidebar>
           <SidebarHeader>
-            <div className="flex items-center justify-center px-2 py-3">
-                <img src="favicon.ico" alt="Kubernetes Bioscope Icon" className="w-6 h-6 mr-2" />
-                <span className="text-gradient font-bold">Docker Bioscope</span>
+            <div className="flex items-center justify-center px-2 py-6">
             </div>
             <SidebarSeparator />
           </SidebarHeader>
@@ -155,7 +153,11 @@ const Index = () => {
         <div className="flex-1 overflow-visible">
           <div className="sticky top-0 z-50 flex items-center justify-between p-4 bg-background/80 backdrop-blur-lg border-b border-border">
             <SidebarTrigger />
-            <div className="text-lg font-bold">Docker Bioscope</div>
+            <div className="flex">
+              <img src="favicon.ico" alt="Kubernetes Bioscope Icon" className="w-6 h-6 mr-2" />
+              <span className="text-gradient font-bold">Docker Bioscope</span>
+            </div>
+           
           </div>
       
       {/* Hero Section */}
