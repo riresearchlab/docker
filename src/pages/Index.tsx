@@ -139,9 +139,10 @@ const Index = () => {
         <Sidebar>
           <SidebarHeader>
             <div className="flex items-center justify-center px-2 py-3">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center glow-primary">
-                <Container className="w-6 h-6 text-primary-foreground" />
+              <div className="w-10 h-10 mr-3 bg-primary rounded-lg flex items-center justify-center glow-primary">
+                <Container className="w-6 h-6 text-primary-foreground" /> 
               </div>
+              <b>Docker Bioscope</b>
             </div>
             <SidebarSeparator />
           </SidebarHeader>
