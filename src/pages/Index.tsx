@@ -153,10 +153,10 @@ const Index = () => {
           </SidebarFooter>
         </Sidebar>
         
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-visible">
           <div className="sticky top-0 z-50 flex items-center justify-between p-4 bg-background/80 backdrop-blur-lg border-b border-border">
             <SidebarTrigger />
-            <div className="text-lg font-bold">Docker Academy</div>
+            <div className="text-lg font-bold">Docker Bioscope</div>
           </div>
       
       {/* Hero Section */}

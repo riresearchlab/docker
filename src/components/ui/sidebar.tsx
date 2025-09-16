@@ -224,7 +224,7 @@ const SidebarToggle = React.forwardRef<
         "h-8 w-8 rounded-lg dark:hover:bg-primary/10 transition-all duration-200",
         "absolute top-3",
         state === 'expanded' && "right-3",
-        state === 'collapsed' && "left-1/2 -translate-x-1/2",
+        state === 'collapsed' && "left-1/2",
         className
       )}
       {...props}
@@ -321,7 +321,6 @@ const Sidebar = React.forwardRef<
           className="relative flex h-full w-full flex-col border-r bg-background text-foreground group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:shadow"
         >
           {children}
-          <SidebarToggle />
         </div>
       </div>
     </div>
@@ -535,7 +534,6 @@ const SidebarNavigation = React.forwardRef<HTMLDivElement, React.ComponentProps<
 
   return (
     <div ref={ref} className={cn("flex flex-col gap-1 py-2", className)} {...props}>
-      <SidebarGroupLabel>Navigation</SidebarGroupLabel>
       <SidebarMenu>
         {navigationItems.map((item) => {
           const Icon = item.icon;
@@ -553,7 +551,7 @@ const SidebarNavigation = React.forwardRef<HTMLDivElement, React.ComponentProps<
                   onClick={() => scrollToSection(item.id)}
                   isActive={isActive}
                 >
-                  <Icon className={cn("w-4 h-4", isActive && "text-primary")} />
+                  <Icon className={cn("w-4 h-4", isActive)} />
                   <span>{item.label}</span>
                 </SidebarMenuButton>
               </motion.div>
@@ -798,7 +796,6 @@ export {
   SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
-  SidebarToggle,
   useSidebar,
   navigationItems,
 };
